@@ -85,6 +85,10 @@ test("streams a mocked raw structured response and restores connection settings"
   await connectionButton.click();
   await expect(page.getByLabel("Base URL")).toHaveValue("https://mock-provider.example/v1");
   await expect(page.getByLabel("Model")).toHaveValue("mock-model");
+  const connectionFieldRows = await page
+    .locator(".connection-dialog-fields .connection-field")
+    .evaluateAll((fields) => fields.map((field) => Math.round(field.getBoundingClientRect().top)));
+  expect(new Set(connectionFieldRows).size).toBe(3);
   await expect(page.getByTestId("schema-editor")).toBeVisible();
 
   const editorScrollState = await page.locator(".cm-scroller").evaluate((element) => ({

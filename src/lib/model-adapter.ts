@@ -1,5 +1,6 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import {
+  APICallError,
   extractJsonMiddleware,
   jsonSchema,
   NoObjectGeneratedError,
@@ -222,13 +223,20 @@ export async function* streamRawChunks(
 }
 
 export function errorMessage(error: unknown): string {
+  if (APICallError.isInstance(error)) {
+    const providerDetails = `${error.message} ${error.responseBody ?? ""}`;
+    if (/response[_ -]?format|json[_ -]?schema|structured output|json mode/i.test(providerDetails)) {
+      return "The endpoint rejected response_format.type=json_schema. Confirm that the selected model supports native structured outputs; JSON mode alone may not accept this schema.";
+    }
+  }
+
   if (NoObjectGeneratedError.isInstance(error)) {
     if (error.message.includes("could not parse")) {
-      return "The endpoint returned text that is not valid JSON for this schema. The raw response is preserved above; check the model's structured-output or JSON mode support.";
+      return "The endpoint returned content that is not a JSON object for this schema. This request used response_format.type=json_schema; confirm that the selected model supports native structured outputs. The raw response is preserved above.";
     }
 
     if (error.message.includes("did not match schema")) {
-      return "The endpoint returned JSON, but it did not match this schema. The raw response is preserved above.";
+      return "The endpoint returned JSON, but it did not match this schema. Check the required fields and types, and confirm that the selected model supports native structured outputs. The raw response is preserved above.";
     }
   }
 
