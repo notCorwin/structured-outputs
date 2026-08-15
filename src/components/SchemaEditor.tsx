@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 import { json } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import CodeMirror from "@uiw/react-codemirror";
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 interface SchemaEditorProps {
   value: string;
   result: SchemaParseResult;
+  connectionControl: ReactNode;
   onChange(value: string): void;
   onReset(): void;
 }
@@ -24,6 +26,7 @@ interface SchemaEditorProps {
 export function SchemaEditor({
   value,
   result,
+  connectionControl,
   onChange,
   onReset,
 }: SchemaEditorProps) {
@@ -49,6 +52,7 @@ export function SchemaEditor({
           <CardTitle id="schema-heading">JSON Schema</CardTitle>
         </div>
         <CardAction className="panel-actions">
+          {connectionControl}
           <Badge
             variant={result.valid ? "secondary" : "destructive"}
             className={`validation-pill ${result.valid ? "valid" : "invalid"}`}

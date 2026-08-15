@@ -33,12 +33,14 @@ function hasConnectionSettings(settings: ConnectionSettings): boolean {
 function Playground({
   schemaText,
   schemaResult,
+  prompt,
   connection,
   storageWarning,
   rawResponse,
   runStatus,
   error,
   onSchemaChange,
+  onPromptChange,
   onResetSchema,
   onConnectionChange,
   onClearConnection,
@@ -47,12 +49,14 @@ function Playground({
 }: {
   schemaText: string;
   schemaResult: SchemaParseResult;
+  prompt: string;
   connection: ConnectionSettings;
   storageWarning: boolean;
   rawResponse: string;
   runStatus: RunStatus;
   error: string | null;
   onSchemaChange(value: string): void;
+  onPromptChange(value: string): void;
   onResetSchema(): void;
   onConnectionChange(field: keyof ConnectionSettings, value: string): void;
   onClearConnection(): void;
@@ -62,17 +66,15 @@ function Playground({
   const aui = useAui();
   const isRunning = useAuiState((state) => state.thread.isRunning);
   const canSend = useAuiState((state) => state.thread.composer.canSend);
-  const seededPrompt = useRef(false);
   const canRun = schemaResult.valid && hasConnectionSettings(connection);
 
   useEffect(() => {
-    if (seededPrompt.current) return;
-    seededPrompt.current = true;
-    aui.thread.composer().setText(SAMPLE_PROMPT);
-  }, [aui]);
+    aui.thread.composer().setText(prompt);
+  }, [aui, prompt]);
 
   function resetSchema() {
     onResetSchema();
+    onPromptChange(SAMPLE_PROMPT);
     aui.thread.composer().setText(SAMPLE_PROMPT);
   }
 
@@ -83,21 +85,20 @@ function Playground({
 
   return (
     <main className="app-shell" aria-label="Structured Outputs Playground">
-      <div className="app-toolbar" aria-label="Playground controls">
-        <ConnectionPanel
-          value={connection}
-          storageWarning={storageWarning}
-          onChange={onConnectionChange}
-          onClear={onClearConnection}
-        />
-      </div>
-
       <div className="workspace">
         <SchemaEditor
           value={schemaText}
           result={schemaResult}
           onChange={onSchemaChange}
           onReset={resetSchema}
+          connectionControl={
+            <ConnectionPanel
+              value={connection}
+              storageWarning={storageWarning}
+              onChange={onConnectionChange}
+              onClear={onClearConnection}
+            />
+          }
         />
         <section className="right-column" aria-label="Prompt and response">
           <RawResponsePanel
@@ -107,9 +108,11 @@ function Playground({
             onClear={clearResponse}
           />
           <PromptComposer
+            prompt={prompt}
             canRun={canRun}
             canSend={canSend}
             isRunning={isRunning}
+            onPromptChange={onPromptChange}
             onInvalidSubmit={onInvalidSubmit}
           />
         </section>
@@ -125,6 +128,7 @@ export default function App() {
   const [schemaResult, setSchemaResult] = useState<SchemaParseResult>(() =>
     parseDraft7Schema(SAMPLE_SCHEMA),
   );
+  const [prompt, setPrompt] = useState(SAMPLE_PROMPT);
   const [rawResponse, setRawResponse] = useState("");
   const [runStatus, setRunStatus] = useState<RunStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +187,7 @@ export default function App() {
     schemaRef.current = nextResult.valid ? nextResult.schema : null;
     setSchemaText(SAMPLE_SCHEMA);
     setSchemaResult(nextResult);
+    setPrompt(SAMPLE_PROMPT);
     setRawResponse("");
     rawResponseRef.current = "";
     setError(null);
@@ -220,12 +225,14 @@ export default function App() {
       <Playground
         schemaText={schemaText}
         schemaResult={schemaResult}
+        prompt={prompt}
         connection={connection}
         storageWarning={storageWarning}
         rawResponse={rawResponse}
         runStatus={runStatus}
         error={error}
         onSchemaChange={updateSchema}
+        onPromptChange={setPrompt}
         onResetSchema={resetSchema}
         onConnectionChange={updateConnection}
         onClearConnection={clearConnection}

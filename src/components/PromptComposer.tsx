@@ -1,44 +1,36 @@
 import { ComposerPrimitive, useAui } from "@assistant-ui/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import type { FormEvent } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 interface PromptComposerProps {
+  prompt: string;
   canRun: boolean;
   canSend: boolean;
   isRunning: boolean;
+  onPromptChange(value: string): void;
   onInvalidSubmit(): void;
 }
 
 export function PromptComposer({
+  prompt,
   canRun,
   canSend,
   isRunning,
+  onPromptChange,
   onInvalidSubmit,
 }: PromptComposerProps) {
   const aui = useAui();
-  const draftRef = useRef("");
-
-  const restoreDraft = useCallback(() => {
-    const draft = draftRef.current;
-    if (!draft.trim()) return;
-
-    const composer = aui.thread.composer();
-    if (composer.getState().text !== draft) composer.setText(draft);
-  }, [aui]);
 
   useEffect(
-    () =>
-      aui.on("thread.runEnd", () => {
-        queueMicrotask(restoreDraft);
-      }),
-    [aui, restoreDraft],
+    () => aui.on("thread.runEnd", () => queueMicrotask(syncPrompt)),
+    [aui, prompt],
   );
 
-  function preserveDraftAfterSend() {
+  function syncPrompt() {
     const composer = aui.thread.composer();
-    draftRef.current = composer.getState().text;
+    if (composer.getState().text !== prompt) composer.setText(prompt);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -48,7 +40,7 @@ export function PromptComposer({
       return;
     }
 
-    preserveDraftAfterSend();
+    syncPrompt();
   }
 
   return (
@@ -65,9 +57,8 @@ export function PromptComposer({
           placeholder="Describe the structured output you want..."
           rows={2}
           aria-label="Prompt"
-          onChange={(event) => {
-            draftRef.current = event.currentTarget.value;
-          }}
+          value={prompt}
+          onChange={(event) => onPromptChange(event.currentTarget.value)}
         />
         {isRunning ? (
           <ComposerPrimitive.Cancel
@@ -79,7 +70,7 @@ export function PromptComposer({
           <ComposerPrimitive.Send
             className={buttonVariants({ variant: "default", size: "lg", className: "composer-action" })}
             disabled={!canRun || !canSend}
-            onClick={preserveDraftAfterSend}
+            onClick={syncPrompt}
           >
             Run
           </ComposerPrimitive.Send>

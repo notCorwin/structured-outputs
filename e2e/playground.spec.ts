@@ -25,7 +25,7 @@ test("streams a mocked raw structured response and restores connection settings"
     const requestBody = JSON.parse(route.request().postData() ?? "{}");
     expect(requestBody.response_format.type).toBe("json_schema");
 
-    const responseText = JSON.stringify({
+    const responseJson = JSON.stringify({
       name: "Compact Tactile Keyboard",
       category: "keyboard",
       price: 99.99,
@@ -43,6 +43,7 @@ test("streams a mocked raw structured response and restores connection settings"
       lastReviewedAt: "2026-08-16T06:00:00Z",
       discontinuedAt: null,
     });
+    const responseText = `\`\`\`json\n${responseJson}\n\`\`\``;
     const splitAt = Math.ceil(responseText.length / 2);
     const response = [responseText.slice(0, splitAt), responseText.slice(splitAt)]
       .map(
@@ -63,6 +64,7 @@ test("streams a mocked raw structured response and restores connection settings"
       )
       .join("");
 
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await route.fulfill({
       status: 200,
       headers: {
@@ -77,7 +79,10 @@ test("streams a mocked raw structured response and restores connection settings"
   await page.goto("/");
   await expect(page.getByRole("main", { name: "Structured Outputs Playground" })).toBeVisible();
   await expect(page.getByLabel("Base URL")).not.toBeVisible();
-  await page.getByRole("button", { name: /Connection/ }).click();
+  await expect(page.locator(".app-toolbar")).toHaveCount(0);
+  const connectionButton = page.locator(".schema-panel").getByRole("button", { name: /Connection/ });
+  await expect(connectionButton).toBeVisible();
+  await connectionButton.click();
   await expect(page.getByLabel("Base URL")).toHaveValue("https://mock-provider.example/v1");
   await expect(page.getByLabel("Model")).toHaveValue("mock-model");
   await expect(page.getByTestId("schema-editor")).toBeVisible();
@@ -100,8 +105,10 @@ test("streams a mocked raw structured response and restores connection settings"
   const prompt = "Return a complete catalog record for this keyboard.";
   await page.getByRole("textbox", { name: "Prompt" }).fill(prompt);
   await page.getByRole("button", { name: "Run" }).click();
+  await expect(page.getByRole("textbox", { name: "Prompt" })).toHaveValue(prompt);
   await expect(page.getByTestId("raw-response")).toContainText('"name":"Compact Tactile Keyboard"');
   await expect(page.getByTestId("raw-response")).toContainText('"discontinuedAt":null');
+  await expect(page.getByTestId("raw-response")).toContainText("```json");
   await expect(page.getByRole("status").filter({ hasText: "complete" })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Prompt" })).toHaveValue(prompt);
   await expect(page.getByRole("button", { name: "Run" })).toBeEnabled();

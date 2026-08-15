@@ -103,21 +103,13 @@ body,
 
 .app-shell {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  grid-template-rows: minmax(0, 1fr);
   width: min(1680px, 100%);
   height: 100dvh;
   min-height: 0;
   margin: 0 auto;
   overflow: hidden;
   padding: 12px clamp(14px, 2.4vw, 32px) 10px;
-}
-
-.app-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 30px;
 }
 
 .panel-heading h2,

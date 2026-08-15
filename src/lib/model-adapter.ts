@@ -1,5 +1,14 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { jsonSchema, Output, streamText } from "ai";
+import {
+  extractJsonMiddleware,
+  jsonSchema,
+  NoObjectGeneratedError,
+  Output,
+  streamText,
+  wrapLanguageModel,
+} from "ai";
+import type { LanguageModelV4StreamPart } from "@ai-sdk/provider";
+import type { LanguageModelMiddleware } from "ai";
 import type {
   ChatModelAdapter,
   ChatModelRunResult,
@@ -48,6 +57,73 @@ function isAbortError(error: unknown): boolean {
   );
 }
 
+function extractJsonDocument(text: string): string {
+  const trimmed = text.trim();
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const character = trimmed[index];
+
+    if (start < 0) {
+      if (character === "{") {
+        start = index;
+        depth = 1;
+      }
+      continue;
+    }
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (character === "\\" && inString) {
+      escaped = true;
+      continue;
+    }
+
+    if (character === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+    if (character === "{") depth += 1;
+    if (character !== "}") continue;
+
+    depth -= 1;
+    if (depth === 0) return trimmed.slice(start, index + 1);
+  }
+
+  return trimmed;
+}
+
+function captureRawTextMiddleware(
+  onText: (chunk: string) => void,
+): LanguageModelMiddleware {
+  return {
+    specificationVersion: "v4",
+    wrapStream: async ({ doStream }) => {
+      const { stream, ...rest } = await doStream();
+
+      return {
+        ...rest,
+        stream: stream.pipeThrough(
+          new TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart>({
+            transform(chunk, controller) {
+              if (chunk.type === "text-delta") onText(chunk.delta);
+              controller.enqueue(chunk);
+            },
+          }),
+        ),
+      };
+    },
+  };
+}
+
 function assertConnection(settings: ConnectionSettings): void {
   if (!settings.baseUrl.trim()) throw new Error("Base URL is required.");
   if (!settings.model.trim()) throw new Error("Model is required.");
@@ -93,8 +169,18 @@ export function createStructuredOutputAdapter(
           supportsStructuredOutputs: true,
         });
 
-        const result = streamText({
+        const model = wrapLanguageModel({
           model: provider(connection.model.trim()),
+          // Capture provider text before compatibility cleanup, while allowing
+          // Output.object() to parse common fenced/prefixed JSON responses.
+          middleware: [
+            extractJsonMiddleware({ transform: extractJsonDocument }),
+            captureRawTextMiddleware(callbacks.onRawChunk),
+          ],
+        });
+
+        const result = streamText({
+          model,
           prompt,
           abortSignal,
           output: Output.object({
@@ -106,7 +192,6 @@ export function createStructuredOutputAdapter(
 
         for await (const chunk of result.textStream) {
           if (!chunk) continue;
-          callbacks.onRawChunk(chunk);
           yield { content: [{ type: "text", text: chunk }] };
         }
 
@@ -137,6 +222,16 @@ export async function* streamRawChunks(
 }
 
 export function errorMessage(error: unknown): string {
+  if (NoObjectGeneratedError.isInstance(error)) {
+    if (error.message.includes("could not parse")) {
+      return "The endpoint returned text that is not valid JSON for this schema. The raw response is preserved above; check the model's structured-output or JSON mode support.";
+    }
+
+    if (error.message.includes("did not match schema")) {
+      return "The endpoint returned JSON, but it did not match this schema. The raw response is preserved above.";
+    }
+  }
+
   if (error instanceof Error && error.message) return error.message;
   if (typeof error === "string") return error;
   return "The model request failed.";
