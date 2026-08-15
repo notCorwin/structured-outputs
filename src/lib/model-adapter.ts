@@ -184,6 +184,9 @@ export function createStructuredOutputAdapter(
           model,
           prompt,
           abortSignal,
+          // Deterministic decoding is more reliable for strict JSON Schema
+          // grammars, especially on OpenRouter free-tier model providers.
+          temperature: 0,
           output: Output.object({
             schema: jsonSchema(schema as Parameters<typeof jsonSchema>[0]),
             name: schemaTitle(schema),

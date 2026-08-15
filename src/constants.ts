@@ -16,9 +16,7 @@ export const SAMPLE_SCHEMA = `{
   "properties": {
     "name": {
       "type": "string",
-      "description": "The product name.",
-      "minLength": 1,
-      "maxLength": 120
+      "description": "The product name."
     },
     "category": {
       "type": "string",
@@ -26,14 +24,11 @@ export const SAMPLE_SCHEMA = `{
     },
     "price": {
       "type": "number",
-      "description": "Current price in USD.",
-      "minimum": 0,
-      "multipleOf": 0.01
+      "description": "Current price in USD."
     },
     "reviewCount": {
       "type": "integer",
-      "description": "Number of published reviews.",
-      "minimum": 0
+      "description": "Number of published reviews."
     },
     "isAvailable": {
       "type": "boolean",
@@ -41,11 +36,8 @@ export const SAMPLE_SCHEMA = `{
     },
     "tags": {
       "type": "array",
-      "description": "Short searchable tags.",
-      "items": { "type": "string", "minLength": 1 },
-      "minItems": 1,
-      "maxItems": 5,
-      "uniqueItems": true
+      "description": "A short list of searchable tags.",
+      "items": { "type": "string" }
     },
     "specifications": {
       "type": "object",
@@ -70,17 +62,14 @@ export const SAMPLE_SCHEMA = `{
         },
         "required": ["label", "value", "verified"],
         "additionalProperties": false
-      },
-      "minItems": 1,
-      "maxItems": 4
+      }
     },
     "lastReviewedAt": {
       "type": "string",
-      "description": "Review timestamp in ISO 8601 format.",
-      "pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}T"
+      "description": "Review timestamp in ISO 8601 format."
     },
     "discontinuedAt": {
-      "type": ["string", "null"],
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
       "description": "ISO timestamp, or null while the product is still active."
     }
   },

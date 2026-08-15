@@ -35,6 +35,42 @@ describe("parseDraft7Schema", () => {
     expect(types).toEqual(new Set(["array", "boolean", "integer", "null", "number", "object", "string"]));
   });
 
+  it("keeps the bundled example within the native structured-output subset", () => {
+    const result = parseDraft7Schema(SAMPLE_SCHEMA);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const unsupportedKeywords = new Set([
+      "format",
+      "maximum",
+      "maxItems",
+      "maxLength",
+      "minimum",
+      "minItems",
+      "minLength",
+      "multipleOf",
+      "pattern",
+      "uniqueItems",
+    ]);
+    const found: string[] = [];
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (value == null || typeof value !== "object") return;
+
+      Object.entries(value).forEach(([key, child]) => {
+        if (unsupportedKeywords.has(key)) found.push(key);
+        visit(child);
+      });
+    };
+
+    visit(result.schema);
+    expect(found).toEqual([]);
+    expect(result.schema.properties).toHaveProperty("discontinuedAt.anyOf");
+  });
+
   it("reports malformed JSON with a diagnostic", () => {
     const result = parseDraft7Schema('{"type":"object",');
 

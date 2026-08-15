@@ -24,6 +24,7 @@ test("streams a mocked raw structured response and restores connection settings"
   await page.route("https://mock-provider.example/v1/chat/completions", async (route) => {
     const requestBody = JSON.parse(route.request().postData() ?? "{}");
     expect(requestBody.response_format.type).toBe("json_schema");
+    expect(requestBody.temperature).toBe(0);
 
     const responseJson = JSON.stringify({
       name: "Compact Tactile Keyboard",
