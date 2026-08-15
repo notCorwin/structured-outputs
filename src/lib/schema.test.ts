@@ -7,9 +7,32 @@ describe("parseDraft7Schema", () => {
 
     expect(result.valid).toBe(true);
     if (result.valid) {
-      expect(result.schema.title).toBe("ProductReview");
+      expect(result.schema.title).toBe("ProductCatalogRecord");
       expect(result.errors).toHaveLength(0);
     }
+  });
+
+  it("demonstrates every JSON Schema value type", () => {
+    const result = parseDraft7Schema(SAMPLE_SCHEMA);
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    const types = new Set<string>();
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (value == null || typeof value !== "object") return;
+
+      const type = (value as { type?: unknown }).type;
+      if (typeof type === "string") types.add(type);
+      if (Array.isArray(type)) type.filter((item): item is string => typeof item === "string").forEach((item) => types.add(item));
+      Object.values(value).forEach(visit);
+    };
+
+    visit(result.schema);
+    expect(types).toEqual(new Set(["array", "boolean", "integer", "null", "number", "object", "string"]));
   });
 
   it("reports malformed JSON with a diagnostic", () => {

@@ -46,7 +46,6 @@ export function SchemaEditor({
     <Card className="panel schema-panel gap-0 p-0" aria-labelledby="schema-heading">
       <CardHeader className="panel-heading border-b">
         <div>
-          <p className="eyebrow">Input</p>
           <CardTitle id="schema-heading">JSON Schema</CardTitle>
         </div>
         <CardAction className="panel-actions">

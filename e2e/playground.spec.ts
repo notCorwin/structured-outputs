@@ -25,12 +25,43 @@ test("streams a mocked raw structured response and restores connection settings"
     const requestBody = JSON.parse(route.request().postData() ?? "{}");
     expect(requestBody.response_format.type).toBe("json_schema");
 
-    const response = [
-      'data: {"id":"mock","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"{\\"summary\\":\\"A response\\","},"finish_reason":null}]}\n\n',
-      'data: {"id":"mock","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"\\"rating\\":4,\\"pros\\":[\\"Quiet\\"],\\"cons\\":[\\"Heavy\\"]}"},"finish_reason":null}]}\n\n',
-      'data: {"id":"mock","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":12,"completion_tokens":18,"total_tokens":30}}\n\n',
-      "data: [DONE]\n\n",
-    ].join("");
+    const responseText = JSON.stringify({
+      name: "Compact Tactile Keyboard",
+      category: "keyboard",
+      price: 99.99,
+      reviewCount: 42,
+      isAvailable: true,
+      tags: ["compact", "tactile"],
+      specifications: {
+        layout: "65%",
+        switchType: "tactile",
+        wireless: true,
+      },
+      highlights: [
+        { label: "Switches", value: "Tactile and hot-swappable", verified: true },
+      ],
+      lastReviewedAt: "2026-08-16T06:00:00Z",
+      discontinuedAt: null,
+    });
+    const splitAt = Math.ceil(responseText.length / 2);
+    const response = [responseText.slice(0, splitAt), responseText.slice(splitAt)]
+      .map(
+        (content) =>
+          `data: ${JSON.stringify({
+            id: "mock",
+            object: "chat.completion.chunk",
+            choices: [{ index: 0, delta: { content }, finish_reason: null }],
+          })}\n\n`,
+      )
+      .concat(
+        `data: ${JSON.stringify({
+          id: "mock",
+          object: "chat.completion.chunk",
+          choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+        })}\n\n`,
+        "data: [DONE]\n\n",
+      )
+      .join("");
 
     await route.fulfill({
       status: 200,
@@ -44,7 +75,7 @@ test("streams a mocked raw structured response and restores connection settings"
   });
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Structured Outputs" })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Structured Outputs Playground" })).toBeVisible();
   await expect(page.getByLabel("Base URL")).not.toBeVisible();
   await page.getByRole("button", { name: /Connection/ }).click();
   await expect(page.getByLabel("Base URL")).toHaveValue("https://mock-provider.example/v1");
@@ -59,16 +90,21 @@ test("streams a mocked raw structured response and restores connection settings"
   expect(editorScrollState.overflowY).toBe("auto");
   expect(editorScrollState.scrollHeight).toBeGreaterThan(editorScrollState.clientHeight);
 
-  const lastSchemaLine = page.locator(".cm-line").last();
-  await lastSchemaLine.scrollIntoViewIfNeeded();
-  await expect(lastSchemaLine).toContainText("}");
+  await page.locator(".cm-scroller").evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+  });
+  await expect(page.locator(".cm-line").last()).toContainText("}");
 
   await page.getByRole("button", { name: "Done" }).click();
 
+  const prompt = "Return a complete catalog record for this keyboard.";
+  await page.getByRole("textbox", { name: "Prompt" }).fill(prompt);
   await page.getByRole("button", { name: "Run" }).click();
-  await expect(page.getByTestId("raw-response")).toContainText('"summary":"A response"');
-  await expect(page.getByTestId("raw-response")).toContainText('"rating":4');
+  await expect(page.getByTestId("raw-response")).toContainText('"name":"Compact Tactile Keyboard"');
+  await expect(page.getByTestId("raw-response")).toContainText('"discontinuedAt":null');
   await expect(page.getByRole("status").filter({ hasText: "complete" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Prompt" })).toHaveValue(prompt);
+  await expect(page.getByRole("button", { name: "Run" })).toBeEnabled();
   await page.getByRole("button", { name: "Copy" }).click();
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
 

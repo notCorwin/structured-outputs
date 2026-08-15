@@ -10,31 +10,94 @@ export const DEFAULT_CONNECTION_SETTINGS: ConnectionSettings = {
 
 export const SAMPLE_SCHEMA = `{
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ProductReview",
-  "description": "A concise product review with a rating and key points.",
+  "title": "ProductCatalogRecord",
+  "description": "A product record demonstrating every JSON Schema value type with nested objects and arrays.",
   "type": "object",
   "properties": {
-    "summary": {
+    "name": {
       "type": "string",
-      "description": "A one-sentence summary of the review."
+      "description": "The product name.",
+      "minLength": 1,
+      "maxLength": 120
     },
-    "rating": {
+    "category": {
+      "type": "string",
+      "enum": ["keyboard", "mouse", "monitor", "headphones"]
+    },
+    "price": {
+      "type": "number",
+      "description": "Current price in USD.",
+      "minimum": 0,
+      "multipleOf": 0.01
+    },
+    "reviewCount": {
       "type": "integer",
-      "minimum": 1,
-      "maximum": 5
+      "description": "Number of published reviews.",
+      "minimum": 0
     },
-    "pros": {
-      "type": "array",
-      "items": { "type": "string" }
+    "isAvailable": {
+      "type": "boolean",
+      "description": "Whether the product can currently be ordered."
     },
-    "cons": {
+    "tags": {
       "type": "array",
-      "items": { "type": "string" }
+      "description": "Short searchable tags.",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true
+    },
+    "specifications": {
+      "type": "object",
+      "description": "Structured product specifications.",
+      "properties": {
+        "layout": { "type": "string" },
+        "switchType": { "type": "string" },
+        "wireless": { "type": "boolean" }
+      },
+      "required": ["layout", "switchType", "wireless"],
+      "additionalProperties": false
+    },
+    "highlights": {
+      "type": "array",
+      "description": "Notable product features.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "value": { "type": "string" },
+          "verified": { "type": "boolean" }
+        },
+        "required": ["label", "value", "verified"],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 4
+    },
+    "lastReviewedAt": {
+      "type": "string",
+      "description": "Review timestamp in ISO 8601 format.",
+      "pattern": "^\\\\d{4}-\\\\d{2}-\\\\d{2}T"
+    },
+    "discontinuedAt": {
+      "type": ["string", "null"],
+      "description": "ISO timestamp, or null while the product is still active."
     }
   },
-  "required": ["summary", "rating", "pros", "cons"],
+  "required": [
+    "name",
+    "category",
+    "price",
+    "reviewCount",
+    "isAvailable",
+    "tags",
+    "specifications",
+    "highlights",
+    "lastReviewedAt",
+    "discontinuedAt"
+  ],
   "additionalProperties": false
 }`;
 
 export const SAMPLE_PROMPT =
-  "Write a short review of a compact mechanical keyboard with tactile switches.";
+  "Create a product catalog record for a compact mechanical keyboard with tactile switches. Fill every field with realistic values, use an ISO timestamp for lastReviewedAt, and use null for discontinuedAt because the product is still active.";

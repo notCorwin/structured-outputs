@@ -44,8 +44,7 @@ export function RawResponsePanel({
     <Card className="panel response-panel gap-0 p-0" aria-labelledby="response-heading">
       <CardHeader className="panel-heading border-b">
         <div>
-          <p className="eyebrow">Output</p>
-          <CardTitle id="response-heading">Raw LLM response</CardTitle>
+          <CardTitle id="response-heading">Raw response</CardTitle>
         </div>
         <CardAction className="panel-actions">
           <Badge variant={statusVariant} className={`run-status status-${runStatus}`} role="status">

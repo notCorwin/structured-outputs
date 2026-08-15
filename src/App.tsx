@@ -82,24 +82,15 @@ function Playground({
   }
 
   return (
-    <main className="app-shell">
-      <header className="app-header">
-        <div className="app-heading">
-          <p className="eyebrow">AI SDK</p>
-          <h1>Structured Outputs</h1>
-          <p className="app-subtitle">
-            Draft-07 schema <span aria-hidden="true">→</span> raw streamed response
-          </p>
-        </div>
-        <div className="header-actions">
-          <ConnectionPanel
-            value={connection}
-            storageWarning={storageWarning}
-            onChange={onConnectionChange}
-            onClear={onClearConnection}
-          />
-        </div>
-      </header>
+    <main className="app-shell" aria-label="Structured Outputs Playground">
+      <div className="app-toolbar" aria-label="Playground controls">
+        <ConnectionPanel
+          value={connection}
+          storageWarning={storageWarning}
+          onChange={onConnectionChange}
+          onClear={onClearConnection}
+        />
+      </div>
 
       <div className="workspace">
         <SchemaEditor
@@ -124,12 +115,6 @@ function Playground({
         </section>
       </div>
 
-      <footer className="app-footer">
-        <span>Browser-only · no request proxy · no response persistence</span>
-        <a href="https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data" target="_blank" rel="noreferrer">
-          AI SDK structured output docs ↗
-        </a>
-      </footer>
     </main>
   );
 }
