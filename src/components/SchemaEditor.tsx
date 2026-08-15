@@ -3,6 +3,17 @@ import { json } from "@codemirror/lang-json";
 import { linter } from "@codemirror/lint";
 import CodeMirror from "@uiw/react-codemirror";
 import type { SchemaParseResult } from "../types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface SchemaEditorProps {
   value: string;
@@ -33,36 +44,40 @@ export function SchemaEditor({
   );
 
   return (
-    <section className="panel schema-panel" aria-labelledby="schema-heading">
-      <div className="panel-heading">
+    <Card className="panel schema-panel gap-0 p-0" aria-labelledby="schema-heading">
+      <CardHeader className="panel-heading border-b">
         <div>
           <p className="eyebrow">Input</p>
-          <h2 id="schema-heading">JSON Schema</h2>
+          <CardTitle id="schema-heading">JSON Schema</CardTitle>
+          <CardDescription>Draft-07 sent through AI SDK Output.object().</CardDescription>
         </div>
-        <div className="panel-actions">
-          <span className={`validation-pill ${result.valid ? "valid" : "invalid"}`}>
+        <CardAction className="panel-actions">
+          <Badge
+            variant={result.valid ? "secondary" : "destructive"}
+            className={`validation-pill ${result.valid ? "valid" : "invalid"}`}
+          >
             <span aria-hidden="true">{result.valid ? "✓" : "!"}</span>
             {result.valid ? "Draft-07 ready" : "Needs attention"}
-          </span>
-          <button className="button button-quiet" type="button" onClick={onReset}>
+          </Badge>
+          <Button variant="outline" size="sm" type="button" onClick={onReset}>
             Reset sample
-          </button>
-        </div>
-      </div>
+          </Button>
+        </CardAction>
+      </CardHeader>
 
-      <div className="editor-frame" data-testid="schema-editor">
+      <CardContent className="editor-frame min-h-0 flex-1 p-0" data-testid="schema-editor">
         <CodeMirror
           value={value}
           height="100%"
           extensions={extensions}
           basicSetup
           onChange={onChange}
-          theme="dark"
+          theme="light"
           aria-label="JSON Schema editor"
         />
-      </div>
+      </CardContent>
 
-      <div className="panel-footer schema-footer">
+      <CardFooter className="panel-footer schema-footer rounded-none bg-transparent">
         {result.valid ? (
           <span className="muted-text">The schema will be passed to AI SDK Output.object().</span>
         ) : (
@@ -70,9 +85,9 @@ export function SchemaEditor({
             {result.errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
-          </ul>
-        )}
-      </div>
-    </section>
+            </ul>
+          )}
+      </CardFooter>
+    </Card>
   );
 }

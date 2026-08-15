@@ -1,4 +1,6 @@
 import { ComposerPrimitive } from "@assistant-ui/react";
+import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface PromptComposerProps {
   canRun: boolean;
@@ -14,7 +16,7 @@ export function PromptComposer({
   onInvalidSubmit,
 }: PromptComposerProps) {
   return (
-    <div className="composer-shell">
+    <Card className="composer-shell p-3">
       <div className="composer-label">
         <span className="eyebrow">Prompt</span>
         <span className="muted-text">One request per run · previous messages are ignored</span>
@@ -35,15 +37,20 @@ export function PromptComposer({
           aria-label="Prompt"
         />
         {isRunning ? (
-          <ComposerPrimitive.Cancel className="button button-danger">
+          <ComposerPrimitive.Cancel
+            className={buttonVariants({ variant: "destructive", size: "lg", className: "composer-action" })}
+          >
             Stop
           </ComposerPrimitive.Cancel>
         ) : (
-          <ComposerPrimitive.Send className="button button-primary" disabled={!canRun || !canSend}>
+          <ComposerPrimitive.Send
+            className={buttonVariants({ variant: "default", size: "lg", className: "composer-action" })}
+            disabled={!canRun || !canSend}
+          >
             Run
           </ComposerPrimitive.Send>
         )}
       </ComposerPrimitive.Root>
-    </div>
+    </Card>
   );
 }
