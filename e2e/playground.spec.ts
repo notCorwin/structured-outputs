@@ -50,6 +50,19 @@ test("streams a mocked raw structured response and restores connection settings"
   await expect(page.getByLabel("Base URL")).toHaveValue("https://mock-provider.example/v1");
   await expect(page.getByLabel("Model")).toHaveValue("mock-model");
   await expect(page.getByTestId("schema-editor")).toBeVisible();
+
+  const editorScrollState = await page.locator(".cm-scroller").evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    overflowY: getComputedStyle(element).overflowY,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(editorScrollState.overflowY).toBe("auto");
+  expect(editorScrollState.scrollHeight).toBeGreaterThan(editorScrollState.clientHeight);
+
+  const lastSchemaLine = page.locator(".cm-line").last();
+  await lastSchemaLine.scrollIntoViewIfNeeded();
+  await expect(lastSchemaLine).toContainText("}");
+
   await page.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "Run" }).click();
