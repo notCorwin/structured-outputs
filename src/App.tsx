@@ -84,27 +84,22 @@ function Playground({
   return (
     <main className="app-shell">
       <header className="app-header">
-        <div>
-          <p className="eyebrow">AI SDK playground</p>
+        <div className="app-heading">
+          <p className="eyebrow">AI SDK</p>
           <h1>Structured Outputs</h1>
           <p className="app-subtitle">
-            Paste a Draft-07 schema, send one prompt, and inspect the generated text exactly as it
-            arrives.
+            Draft-07 schema <span aria-hidden="true">→</span> raw streamed response
           </p>
         </div>
-        <div className="header-mark" aria-hidden="true">
-          <span>{"{"}</span>
-          <span>···</span>
-          <span>{"}"}</span>
+        <div className="header-actions">
+          <ConnectionPanel
+            value={connection}
+            storageWarning={storageWarning}
+            onChange={onConnectionChange}
+            onClear={onClearConnection}
+          />
         </div>
       </header>
-
-      <ConnectionPanel
-        value={connection}
-        storageWarning={storageWarning}
-        onChange={onConnectionChange}
-        onClear={onClearConnection}
-      />
 
       <div className="workspace">
         <SchemaEditor

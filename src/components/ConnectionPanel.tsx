@@ -1,15 +1,19 @@
 import type { ConnectionSettings } from "../types";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface ConnectionPanelProps {
@@ -19,26 +23,40 @@ interface ConnectionPanelProps {
   onClear(): void;
 }
 
+function hasConnectionSettings(settings: ConnectionSettings): boolean {
+  return Boolean(settings.baseUrl.trim() && settings.model.trim() && settings.apiKey.trim());
+}
+
 export function ConnectionPanel({
   value,
   storageWarning,
   onChange,
   onClear,
 }: ConnectionPanelProps) {
-  return (
-    <Card className="connection-panel" aria-labelledby="connection-heading">
-      <CardHeader className="connection-heading">
-        <div>
-          <p className="eyebrow">Browser BYOK</p>
-          <CardTitle id="connection-heading">Connection</CardTitle>
-        </div>
-        <Button variant="outline" size="sm" type="button" onClick={onClear}>
-          Clear saved config
-        </Button>
-      </CardHeader>
+  const isConfigured = hasConnectionSettings(value);
 
-      <CardContent className="p-0">
-        <FieldGroup className="connection-fields">
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm" className="connection-trigger" />
+        }
+      >
+        Connection
+        <Badge variant={isConfigured ? "secondary" : "outline"}>
+          {isConfigured ? "ready" : "setup"}
+        </Badge>
+      </DialogTrigger>
+
+      <DialogContent className="connection-dialog">
+        <DialogHeader>
+          <DialogTitle>Connection</DialogTitle>
+          <DialogDescription>
+            Configure the browser-side OpenAI-compatible endpoint for this playground.
+          </DialogDescription>
+        </DialogHeader>
+
+        <FieldGroup className="connection-fields connection-dialog-fields">
           <Field className="connection-field">
             <FieldLabel htmlFor="base-url">Base URL</FieldLabel>
             <Input
@@ -77,23 +95,31 @@ export function ConnectionPanel({
             />
           </Field>
         </FieldGroup>
-      </CardContent>
 
-      <Separator />
-      <CardFooter className="connection-footer border-t-0 bg-transparent">
-        <p className="connection-note">
-          The endpoint must allow CORS. Your key is sent directly from this page and saved in
-          localStorage.
-        </p>
-        {storageWarning && (
-          <Alert variant="destructive" role="status" className="storage-warning">
-            <AlertTitle>localStorage unavailable</AlertTitle>
-            <AlertDescription>
-              This browser blocked localStorage; connection settings will not persist.
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardFooter>
-    </Card>
+        <Separator />
+        <DialogFooter className="connection-dialog-footer">
+          <div className="connection-dialog-note">
+            <p>
+              The endpoint must allow CORS. The key is sent directly from this page and saved in
+              localStorage.
+            </p>
+            {storageWarning && (
+              <Alert variant="destructive" role="status">
+                <AlertTitle>localStorage unavailable</AlertTitle>
+                <AlertDescription>
+                  This browser blocked localStorage; connection settings will not persist.
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+          <div className="connection-dialog-actions">
+            <Button variant="outline" type="button" onClick={onClear}>
+              Clear saved config
+            </Button>
+            <DialogClose render={<Button variant="default" />}>Done</DialogClose>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

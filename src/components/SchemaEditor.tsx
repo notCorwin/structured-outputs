@@ -8,7 +8,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -49,7 +48,6 @@ export function SchemaEditor({
         <div>
           <p className="eyebrow">Input</p>
           <CardTitle id="schema-heading">JSON Schema</CardTitle>
-          <CardDescription>Draft-07 sent through AI SDK Output.object().</CardDescription>
         </div>
         <CardAction className="panel-actions">
           <Badge

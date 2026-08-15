@@ -17,6 +17,7 @@ describe("ConnectionPanel", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: /Connection/ }));
     await user.type(screen.getByLabelText("Model"), "demo-model");
 
     expect(onChange).toHaveBeenCalledWith("model", "d");

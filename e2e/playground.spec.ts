@@ -45,9 +45,12 @@ test("streams a mocked raw structured response and restores connection settings"
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Structured Outputs" })).toBeVisible();
+  await expect(page.getByLabel("Base URL")).not.toBeVisible();
+  await page.getByRole("button", { name: /Connection/ }).click();
   await expect(page.getByLabel("Base URL")).toHaveValue("https://mock-provider.example/v1");
   await expect(page.getByLabel("Model")).toHaveValue("mock-model");
   await expect(page.getByTestId("schema-editor")).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
 
   await page.getByRole("button", { name: "Run" }).click();
   await expect(page.getByTestId("raw-response")).toContainText('"summary":"A response"');
@@ -57,5 +60,6 @@ test("streams a mocked raw structured response and restores connection settings"
   await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
 
   await page.reload();
+  await page.getByRole("button", { name: /Connection/ }).click();
   await expect(page.getByLabel("API Key")).toHaveValue("test-key");
 });
